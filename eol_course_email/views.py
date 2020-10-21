@@ -43,7 +43,9 @@ def get_received_emails(request, course_id):
     """
         Get all received emails
     """
+    logger.warning("Received emails")
     user = request.user
+    logger.warning(user)
     emails = EolCourseEmail.objects.filter(
         course_id=course_id,
         receiver_users__in=[user],
@@ -53,7 +55,8 @@ def get_received_emails(request, course_id):
         'message',
         'sender_user__profile__name',
         'created_at'
-    ).order_by('created_at')
+    ).order_by('-created_at')
+    logger.warning(emails)
     data = json.dumps(list(emails), default=json_util.default)
     return HttpResponse(data)
 
@@ -66,10 +69,11 @@ def get_sended_emails(request, course_id):
         course_id=course_id,
         sender_user=user,
         deleted_at__isnull=True
-    ).order_by('created_at')
+    ).order_by('-created_at')
     sended_emails = [
         {
             'receiver_users_list' : e.receiver_users_list,
+            'sender_user' : e.sender_user.profile.name,
             'subject' : e.subject,
             'message' : e.message,
             'created_at' : e.created_at
