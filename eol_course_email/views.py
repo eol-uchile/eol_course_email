@@ -85,7 +85,7 @@ def get_sended_emails(request, course_id):
 
 def get_all_users_enrolled(request, course_id):
     """
-        Get all users enrolled in the course (except user logged)
+        Get all users enrolled in the course
     """
     user = request.user
     roles = get_access_roles(course_id)
@@ -96,7 +96,7 @@ def get_all_users_enrolled(request, course_id):
         'username',
         'profile__name',
         'email'
-    ).exclude(id=user.id)
+    )
     for u in users:
         u['has_role'] = u['username'] in roles
     data = json.dumps(list(users), default=json_util.default)
@@ -114,3 +114,38 @@ def get_access_roles(course_id):
         flat=True,
     )
     return list(roles)
+
+def send_new_email(request, course_id):
+    """
+        POST
+        Store data and send email
+    """
+    # check method and params
+    if request.method != "POST":
+        return HttpResponse(status=400)
+    data = json.loads(request.body.decode())
+    if 'subjectInput' not in data or 'messageInput' not in data or 'studentsInput' not in data or 'staffInput' not in data:
+        return HttpResponse(status=400)
+    user = request.user
+    subject = data['subjectInput']
+    message = data['messageInput']
+    receiver_usernames = data['studentsInput'] + data['staffInput']
+
+    # get users
+    receiver_users = User.objects.filter(
+        courseenrollment__course_id=course_id,
+        courseenrollment__is_active=1,
+        username__in=receiver_usernames
+    )
+
+    # store data
+    email = EolCourseEmail(
+        course_id=course_id,
+        sender_user=user,
+        subject=subject.strip(),
+        message=message.strip()
+    )
+    email.save()
+    email.receiver_users.add(*receiver_users)
+
+    return HttpResponse(status=201)

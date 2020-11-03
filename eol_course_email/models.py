@@ -28,22 +28,3 @@ class EolCourseEmail(models.Model):
             Return list of users profile names
         """
         return [u.profile.name for u in self.receiver_users.all()]
-
-class EolCourseEmailUserConfiguration(models.Model):
-    """
-        User configuration
-    """
-    class Meta:
-        index_together = [
-            ["user", "course_id"],
-        ]
-        unique_together = [
-            ["user", "course_id"],
-        ]
-
-    course_id = CourseKeyField(max_length=255)
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="user")
-    archived_emails = models.ManyToManyField(EolCourseEmail)
