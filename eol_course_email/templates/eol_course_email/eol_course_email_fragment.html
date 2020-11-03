@@ -38,12 +38,27 @@
 
 </style>
 
-<script>
-  function resizeIframe(obj) {
-    obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
-  }
-</script>
-
 <main id="main" aria-label="Content" tabindex="-1">
-    <iframe id="reactIframe" width="100%" frameborder="0" scrolling="no" onload="resizeIframe(this)" src="/eol/eol_course_email/static/${course.id}"></iframe>
+    <iframe 
+        id="reactIframe" 
+        width="100%" 
+        frameborder="0" 
+        allowfullscreen="" 
+        scrolling="yes" 
+        src="/eol/eol_course_email/static/${course.id}"
+    ></iframe>
 </main>
+
+<script>
+    $(function() {
+        function receiveMessage(event) {
+            var { type, payload } = event.data;
+            if (type === 'plugin.resize') {
+                document.getElementById( 'reactIframe' ).height = payload.height + 20;
+            } 
+        }
+        // Now add our new receiveMessage handler as the event listener.
+        global.addEventListener('message', receiveMessage);
+    });
+
+</script>
