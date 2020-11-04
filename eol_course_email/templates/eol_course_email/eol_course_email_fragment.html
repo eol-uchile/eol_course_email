@@ -51,10 +51,11 @@
 
 <script>
     $(function() {
+        const MIN_HEIGHT = 600;
         function receiveMessage(event) {
             var { type, payload } = event.data;
             if (type === 'plugin.resize') {
-                document.getElementById( 'reactIframe' ).height = payload.height + 20;
+                document.getElementById( 'reactIframe' ).height = Math.max(payload.height + 20, MIN_HEIGHT);
             } 
         }
         // Now add our new receiveMessage handler as the event listener.
