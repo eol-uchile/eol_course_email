@@ -1,0 +1,8 @@
+## mako
+<html>
+<p><strong>${sender_name}</strong> ha escrito:</p>
+<div>${message}</div>
+<hr/>
+<p>Este correo ha sido generado por el curso: <strong>${course_name}</strong> de la plataforma <strong>${platform_name}</strong>.</p>
+<p><a href="${redirect_url}">Haz clic acá para ingresar al curso.</a></p>
+</html>
