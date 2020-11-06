@@ -2,7 +2,7 @@
 
 
 from mock import patch, Mock
-
+import json
 
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -16,9 +16,21 @@ from student.tests.factories import UserFactory, CourseEnrollmentFactory
 from six.moves import range
 
 from . import views
+from .models import EolCourseEmail
 
 USER_COUNT = 11
 
+DEFAULT_TEST_DATA_LENGTH = 5
+def generate_default_test_data(course_id, sender_user, receiver_user_list):
+    for i in range(DEFAULT_TEST_DATA_LENGTH):
+        email = EolCourseEmail(
+            course_id=course_id,
+            sender_user=sender_user,
+            subject="Subject {}".format(i),
+            message="Message {}".format(i)
+        )
+        email.save()
+        email.receiver_users.add(*receiver_user_list)
 
 class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
     def setUp(self):
@@ -53,8 +65,61 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
             self.assertTrue(self.staff_client.login(username='staff_user', password='test'))
 
     def test_render_page(self):
-
+        """
+            Test correct render page with an IFrame
+        """
         url = reverse('course_email_view',
                       kwargs={'course_id': self.course.id})
         self.response = self.client.get(url)
         self.assertEqual(self.response.status_code, 200)
+        self.assertIn( 'id="reactIframe"', self.response.content.decode("utf-8"))
+
+    def test_get_received_emails(self):
+        """
+            Test get user received emails
+        """
+        # Empty list
+        response = self.client.get(
+            reverse(
+                'course_email_received_emails',
+                    kwargs={'course_id': self.course.id}
+            )
+        )
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content, [])
+
+        # Generate data + get email list
+        generate_default_test_data(self.course.id, self.staff_user, [self.student, self.staff_user])
+        response = self.client.get(
+            reverse(
+                'course_email_received_emails',
+                    kwargs={'course_id': self.course.id}
+            )
+        )
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(len(content), DEFAULT_TEST_DATA_LENGTH)
+
+    def test_get_sended_emails(self):
+        """
+            Test get user sended emails
+        """
+        # Empty list
+        response = self.client.get(
+            reverse(
+                'course_email_sended_emails',
+                    kwargs={'course_id': self.course.id}
+            )
+        )
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content, [])
+
+        # Generate data + get email list
+        generate_default_test_data(self.course.id, self.student, [self.staff_user])
+        response = self.client.get(
+            reverse(
+                'course_email_sended_emails',
+                    kwargs={'course_id': self.course.id}
+            )
+        )
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(len(content), DEFAULT_TEST_DATA_LENGTH)
