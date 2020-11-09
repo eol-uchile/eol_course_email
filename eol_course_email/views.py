@@ -128,9 +128,11 @@ def send_new_email(request, course_id):
     """
     # check method and params
     if request.method != "POST":
+        logger.warning("Wrong Method/data")
         return HttpResponse(status=400)
     data = json.loads(request.body.decode())
     if 'subjectInput' not in data or 'messageInput' not in data or 'studentsInput' not in data or 'staffInput' not in data:
+        logger.warning("POST without all data")
         return HttpResponse(status=400)
     user = request.user
     subject = data['subjectInput']
