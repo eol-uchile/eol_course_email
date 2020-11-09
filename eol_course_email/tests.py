@@ -12,10 +12,12 @@ from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 
 from xmodule.modulestore.tests.factories import CourseFactory
 from student.tests.factories import UserFactory, CourseEnrollmentFactory
+from student.roles import CourseStaffRole
 
 from six.moves import range
 
 from . import views
+from . import email_tasks
 from .models import EolCourseEmail
 
 USER_COUNT = 11
@@ -55,6 +57,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
             # Create and Enroll staff user
             self.staff_user = UserFactory(username='staff_user', password='test', email='staff@edx.org', is_staff=True)
             CourseEnrollmentFactory(user=self.staff_user, course_id=self.course.id)
+            CourseStaffRole(self.course.id).add_users(self.staff_user)
 
             # Log the student in
             self.client = Client()
@@ -70,9 +73,9 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         """
         url = reverse('course_email_view',
                       kwargs={'course_id': self.course.id})
-        self.response = self.client.get(url)
-        self.assertEqual(self.response.status_code, 200)
-        self.assertIn( 'id="reactIframe"', self.response.content.decode("utf-8"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn( 'id="reactIframe"', response.content.decode("utf-8"))
 
     def test_get_received_emails(self):
         """
@@ -123,3 +126,89 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         )
         content = json.loads(response.content.decode("utf-8"))
         self.assertEqual(len(content), DEFAULT_TEST_DATA_LENGTH)
+
+    def test_get_users_enrolled(self):
+        """
+            Test get all users enrolled
+        """
+        response = self.client.get(
+            reverse(
+                'course_email_users',
+                    kwargs={'course_id': self.course.id}
+            )
+        )
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(len(content), USER_COUNT + 2) # Test users + student + staff_user
+
+    def test_get_access_roles(self):
+        """
+            Test get users with access roles
+        """
+        access_roles = views.get_access_roles(self.course.id)
+        self.assertEqual(access_roles, ['staff_user'])
+
+    def test_send_new_email(self):
+        """
+            Test post new email
+        """
+        response = self.client.get(
+            reverse(
+                'course_email_send_new_email',
+                    kwargs={'course_id': self.course.id}
+            )
+        )
+        self.assertEqual(response.status_code, 400) # not a GET request
+        response = self.client.post(
+            reverse(
+                'course_email_send_new_email',
+                    kwargs={'course_id': self.course.id}
+            ), content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) # POST request without data required
+        post_data = {
+            'messageInput' : "messageInput",
+            'studentsInput' : ["student"],
+            'staffInput': ["staff_user"]
+        }
+        response = self.client.post(
+            reverse(
+                'course_email_send_new_email',
+                    kwargs={'course_id': self.course.id}
+            ), post_data, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) # POST request without subject required
+
+        post_data = {
+            'subjectInput' : "subjectInput",
+            'messageInput' : "messageInput",
+            'studentsInput' : ["student"],
+            'staffInput': ["staff_user"]
+        }
+        response = self.client.post(
+            reverse(
+                'course_email_send_new_email',
+                    kwargs={'course_id': self.course.id}
+            ), post_data, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201) # POST request with all data
+
+
+        exists = EolCourseEmail.objects.filter(
+            course_id=self.course.id,
+            subject="subjectInput"
+        ).exists()
+        self.assertEqual(exists, True) # Check if email has been created
+
+    def test_send_email_task(self):
+        """"
+            Test send email task
+        """
+        email = email_tasks.send_email(
+            "from_email@email.com", 
+            "reply_to@email.com", 
+            "to_email@email.com", 
+            "subject", 
+            "html_message", 
+            "plain_message"
+        )
+        self.assertEqual(email, 1) # success
