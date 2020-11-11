@@ -43,14 +43,25 @@
 </style>
 
 <main id="main" aria-label="Content" tabindex="-1">
-    <iframe 
-        id="reactIframe" 
-        width="100%" 
-        frameborder="0" 
-        allowfullscreen="" 
-        scrolling="yes" 
-        src="/eol/eol_course_email/static/${course.id}"
-    ></iframe>
+    % if DEV_URL is None:
+        <iframe 
+            id="reactIframe" 
+            width="100%" 
+            frameborder="0" 
+            allowfullscreen="" 
+            scrolling="yes" 
+            src="${static.url('eol_course_email/index.html')}#/eol/eol_course_email/static/${course.id}"
+        ></iframe>
+    % else :
+        <iframe 
+            id="reactIframe" 
+            width="100%" 
+            frameborder="0" 
+            allowfullscreen="" 
+            scrolling="yes" 
+            src="${DEV_URL}#/eol/eol_course_email/static/${course.id}"
+        ></iframe>
+    % endif 
 </main>
 
 <script>

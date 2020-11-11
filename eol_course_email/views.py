@@ -30,7 +30,8 @@ class EolCourseEmailFragmentView(EdxFragmentView):
         course_key = CourseKey.from_string(course_id)
         course = get_course_with_access(request.user, "load", course_key)
         context = {
-            "course": course
+            "course": course,
+            "DEV_URL": configuration_helpers.get_value('EOL_COURSE_EMAIL_DEV_URL', settings.EOL_COURSE_EMAIL_DEV_URL)
         }
         html = render_to_string('eol_course_email/eol_course_email_fragment.html', context)
         fragment = Fragment(html)

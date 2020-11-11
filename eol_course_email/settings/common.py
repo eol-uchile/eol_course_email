@@ -2,4 +2,4 @@
 
 
 def plugin_settings(settings):
-    settings.EOL_COURSE_EMAIL_ROOT = None
+    settings.EOL_COURSE_EMAIL_DEV_URL = None
