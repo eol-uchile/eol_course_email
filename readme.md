@@ -6,7 +6,7 @@ Email between course participants
 
 ## Configurations
 
-LMS Django Admin:
+LMS/CMS Django Admin:
 
 - */admin/site_configuration/siteconfiguration/*
     - **"EOL_COURSE_EMAIL_TAB_ENABLED":true**

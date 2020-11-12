@@ -3,6 +3,7 @@
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from django.conf import settings
 from lms.djangoapps.courseware.courses import get_course_by_id
+from lms.djangoapps.courseware.tabs import get_course_tab_list
 from django.utils.html import strip_tags
 from django.urls import reverse
 
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class EolCourseEmailFragmentView(EdxFragmentView):
     def render_to_fragment(self, request, course_id, **kwargs):
-        if(not self.has_page_access(request.user, course_id)):
+        if(not _has_page_access(request, course_id)):
             raise Http404()
 
         course_key = CourseKey.from_string(course_id)
@@ -38,21 +39,29 @@ class EolCourseEmailFragmentView(EdxFragmentView):
         return fragment
             
 
-    def has_page_access(self, user, course_id):
-        course_key = CourseKey.from_string(course_id)
-        return User.objects.filter(
-            courseenrollment__course_id=course_key,
-            courseenrollment__is_active=1,
-            pk = user.id
-        ).exists()
+def _has_page_access(request, course_id):
+    """
+        Check if tab is enabled and user is enrolled
+    """ 
+    course_key = CourseKey.from_string(course_id)
+    course = get_course_with_access(request.user, "load", course_key)
+    tabs = get_course_tab_list(request.user, course)
+    tabs_list = [tab.tab_id for tab in tabs]
+    if 'eol_course_email' not in tabs_list:
+        return False
+    return User.objects.filter(
+        courseenrollment__course_id=course_key,
+        courseenrollment__is_active=1,
+        pk = request.user.id
+    ).exists()
 
 def get_received_emails(request, course_id):
     """
         Get all received emails
     """
-    logger.warning("Received emails")
+    if(not _has_page_access(request, course_id)):
+        raise Http404()
     user = request.user
-    logger.warning(user)
     emails = EolCourseEmail.objects.filter(
         course_id=course_id,
         receiver_users__in=[user],
@@ -63,7 +72,6 @@ def get_received_emails(request, course_id):
         'sender_user__profile__name',
         'created_at'
     ).order_by('-created_at')
-    logger.warning(emails)
     data = json.dumps(list(emails), default=json_util.default)
     return HttpResponse(data)
 
@@ -71,6 +79,8 @@ def get_sended_emails(request, course_id):
     """
         Get all sended emails
     """
+    if(not _has_page_access(request, course_id)):
+        raise Http404()
     user = request.user
     emails = EolCourseEmail.objects.filter(
         course_id=course_id,
@@ -94,6 +104,8 @@ def get_all_users_enrolled(request, course_id):
     """
         Get all users enrolled in the course
     """
+    if(not _has_page_access(request, course_id)):
+        raise Http404()
     user = request.user
     roles = get_access_roles(course_id)
     users = User.objects.filter(
@@ -127,6 +139,8 @@ def send_new_email(request, course_id):
         POST
         Store data and send email
     """
+    if(not _has_page_access(request, course_id)):
+        raise Http404()
     # check method and params
     if request.method != "POST":
         logger.warning("Wrong Method/data")
@@ -191,5 +205,4 @@ def generate_email(email, redirect_url):
         'eol_course_email/email.txt', context)
     plain_message = strip_tags(html_message)
     for u in email.receiver_users.all():
-        logger.warning("Sending email to {}".format(u.email))
         send_email.delay(from_email, email.sender_user.email, u.email, email.subject, html_message, plain_message)

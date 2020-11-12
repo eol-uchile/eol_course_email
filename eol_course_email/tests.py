@@ -67,20 +67,24 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
             self.staff_client = Client()
             self.assertTrue(self.staff_client.login(username='staff_user', password='test'))
 
-    def test_render_page(self):
+    @patch("eol_course_email.views._has_page_access")
+    def test_render_page(self, has_page_access):
         """
             Test correct render page with an IFrame
         """
+        has_page_access.side_effect = [True]
         url = reverse('course_email_view',
                       kwargs={'course_id': self.course.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertIn( 'id="reactIframe"', response.content.decode("utf-8"))
 
-    def test_get_received_emails(self):
+    @patch("eol_course_email.views._has_page_access")
+    def test_get_received_emails(self, has_page_access):
         """
             Test get user received emails
         """
+        has_page_access.side_effect = [True, True]
         # Empty list
         response = self.client.get(
             reverse(
@@ -102,10 +106,12 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         content = json.loads(response.content.decode("utf-8"))
         self.assertEqual(len(content), DEFAULT_TEST_DATA_LENGTH)
 
-    def test_get_sended_emails(self):
+    @patch("eol_course_email.views._has_page_access")
+    def test_get_sended_emails(self, has_page_access):
         """
             Test get user sended emails
         """
+        has_page_access.side_effect = [True, True]
         # Empty list
         response = self.client.get(
             reverse(
@@ -127,10 +133,12 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         content = json.loads(response.content.decode("utf-8"))
         self.assertEqual(len(content), DEFAULT_TEST_DATA_LENGTH)
 
-    def test_get_users_enrolled(self):
+    @patch("eol_course_email.views._has_page_access")
+    def test_get_users_enrolled(self, has_page_access):
         """
             Test get all users enrolled
         """
+        has_page_access.side_effect = [True]
         response = self.client.get(
             reverse(
                 'course_email_users',
@@ -147,10 +155,12 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         access_roles = views.get_access_roles(self.course.id)
         self.assertEqual(access_roles, ['staff_user'])
 
-    def test_send_new_email(self):
+    @patch("eol_course_email.views._has_page_access")
+    def test_send_new_email(self, has_page_access):
         """
             Test post new email
         """
+        has_page_access.side_effect = [True, True, True, True]
         response = self.client.get(
             reverse(
                 'course_email_send_new_email',
