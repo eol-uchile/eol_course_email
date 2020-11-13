@@ -113,8 +113,7 @@ def get_all_users_enrolled(request, course_id):
         courseenrollment__is_active=1
     ).values(
         'username',
-        'profile__name',
-        'email'
+        'profile__name'
     )
     for u in users:
         u['has_role'] = u['username'] in roles
