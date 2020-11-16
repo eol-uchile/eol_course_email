@@ -80,6 +80,22 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         self.assertIn( 'id="reactIframe"', response.content.decode("utf-8"))
 
     @patch("eol_course_email.views._has_page_access")
+    def test_get_user_email(self, has_page_access):
+        """
+            Test get user email
+        """
+        has_page_access.side_effect = [True]
+        # Empty list
+        response = self.client.get(
+            reverse(
+                'course_email_user_email',
+                    kwargs={'course_id': self.course.id}
+            )
+        )
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content, self.student.email)
+    
+    @patch("eol_course_email.views._has_page_access")
     def test_get_received_emails(self, has_page_access):
         """
             Test get user received emails
