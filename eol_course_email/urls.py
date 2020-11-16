@@ -3,7 +3,7 @@
 from django.conf.urls import url
 from django.conf import settings
 
-from .views import EolCourseEmailFragmentView, get_received_emails, get_sended_emails, get_all_users_enrolled, send_new_email
+from .views import EolCourseEmailFragmentView, get_received_emails, get_sended_emails, get_all_users_enrolled, send_new_email, get_user_email
 from django.contrib.auth.decorators import login_required
 
 
@@ -14,6 +14,13 @@ urlpatterns = (
         ),
         login_required(EolCourseEmailFragmentView.as_view()),
         name='course_email_view',
+    ),
+    url(
+        r'courses/{}/course_emails/user_email'.format(
+            settings.COURSE_ID_PATTERN,
+        ),
+        login_required(get_user_email),
+        name='course_email_user_email',
     ),
     url(
         r'courses/{}/course_emails/received'.format(

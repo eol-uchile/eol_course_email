@@ -55,6 +55,16 @@ def _has_page_access(request, course_id):
         pk = request.user.id
     ).exists()
 
+def get_user_email(request, course_id):
+    """
+        Get user email
+    """
+    if(not _has_page_access(request, course_id)):
+        raise Http404()
+    user = request.user
+    data = json.dumps(request.user.email, default=json_util.default)
+    return HttpResponse(data)
+
 def get_received_emails(request, course_id):
     """
         Get all received emails
