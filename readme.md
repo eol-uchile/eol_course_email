@@ -24,6 +24,7 @@ Set React app url:
     > cd frontend
     > docker build -t frontend .
     > docker run -v $(pwd)/dist:/app/dist frontend npm run-script build
+    > rm ../eol_course_email/static/eol_course_email/*
     > cp -r dist/* ../eol_course_email/static/eol_course_email/
 
 ## TESTS
