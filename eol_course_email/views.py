@@ -6,6 +6,7 @@ from lms.djangoapps.courseware.courses import get_course_by_id
 from lms.djangoapps.courseware.tabs import get_course_tab_list
 from django.utils.html import strip_tags
 from django.urls import reverse
+from ratelimit.decorators import ratelimit
 
 from django.template.loader import render_to_string
 from web_fragments.fragment import Fragment
@@ -143,6 +144,7 @@ def get_access_roles(course_id):
     )
     return list(roles)
 
+@ratelimit(key=settings.EOL_COURSE_EMAIL_POST_EMAIL_KEY, rate=settings.EOL_COURSE_EMAIL_POST_EMAIL_RATE)
 def send_new_email(request, course_id):
     """
         POST
@@ -158,6 +160,10 @@ def send_new_email(request, course_id):
     if 'subjectInput' not in data or 'messageInput' not in data or 'studentsInput' not in data or 'staffInput' not in data:
         logger.warning("POST without all data")
         return HttpResponse(status=400)
+
+    # Ratelimit: too many API calls
+    if getattr(request, 'limited', False):
+        return HttpResponse('ratelimit', status=403)
     user = request.user
     subject = data['subjectInput']
     message = data['messageInput']
