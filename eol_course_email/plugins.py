@@ -15,9 +15,21 @@ class EolCourseEmailTab(TabFragmentViewMixin, EnrolledTab):
     view_name = 'course_email_view'
     fragment_view_name = 'eol_course_email.views.EolCourseEmailFragmentView'
     is_hideable = True
-    is_default = False
+    is_default = True
+    is_hidden = True
     body_class = 'eol_course_email'
     online_help_token = 'eol_course_email'
+
+    
+    def __init__(self, tab_dict):
+        super(EolCourseEmailTab, self).__init__(tab_dict)
+        self.is_hidden = tab_dict.get('eol_visible', True)
+
+    def to_json(self):
+        """ Return a dictionary representation of this tab. """
+        to_json_val = super(EolCourseEmailTab, self).to_json()
+        to_json_val.update({'eol_visible': self.is_hidden})
+        return to_json_val
 
     @classmethod
     def is_enabled(cls, course, user=None):
