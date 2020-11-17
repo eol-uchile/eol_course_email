@@ -6,6 +6,7 @@ import json
 
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.test import override_settings
 
 from util.testing import UrlResetMixin
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -210,20 +211,22 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
             'studentsInput' : ["student"],
             'staffInput': ["staff_user"]
         }
-        response = self.client.post(
-            reverse(
-                'course_email_send_new_email',
-                    kwargs={'course_id': self.course.id}
-            ), post_data, content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 201) # POST request with all data
+
+        with override_settings(RATELIMIT_ENABLE=False):
+            response = self.client.post(
+                reverse(
+                    'course_email_send_new_email',
+                        kwargs={'course_id': self.course.id}
+                ), post_data, content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 201) # POST request with all data
 
 
-        exists = EolCourseEmail.objects.filter(
-            course_id=self.course.id,
-            subject="subjectInput"
-        ).exists()
-        self.assertEqual(exists, True) # Check if email has been created
+            exists = EolCourseEmail.objects.filter(
+                course_id=self.course.id,
+                subject="subjectInput"
+            ).exists()
+            self.assertEqual(exists, True) # Check if email has been created
 
     def test_send_email_task(self):
         """"
