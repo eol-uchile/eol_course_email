@@ -210,7 +210,7 @@ def generate_email(email, redirect_url):
         "platform_name": platform_name,
         "redirect_url": redirect_url,
         "message": email.message,
-        "sender_name": email.sender_user.profile.name
+        "sender_name": email.sender_user.profile.name.title()
     }
     from_email = configuration_helpers.get_value(
         'email_from_address',
