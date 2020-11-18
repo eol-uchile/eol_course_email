@@ -219,6 +219,6 @@ def generate_email(email, redirect_url):
     html_message = render_to_string(
         'eol_course_email/email.txt', context)
     plain_message = strip_tags(html_message)
-    email_subject = "{} - {}".format(course.display_name_with_default, email.subject)
+    email_subject = "{} - {}".format(email.subject, course.display_name_with_default)
     for u in email.receiver_users.all():
         send_email.delay(from_email, email.sender_user.email, u.email, email_subject, html_message, plain_message)
