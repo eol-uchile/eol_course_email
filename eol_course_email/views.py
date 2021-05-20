@@ -17,6 +17,7 @@ from django.contrib.auth.models import User
 from django.http import Http404, HttpResponse
 from bson import json_util
 import json
+from django.db.models.functions import Lower
 from .models import EolCourseEmail
 from .email_tasks import send_email
 from student.models import CourseAccessRole
@@ -125,7 +126,7 @@ def get_all_users_enrolled(request, course_id):
     ).values(
         'username',
         'profile__name'
-    )
+    ).order_by(Lower('profile__name'))
     for u in users:
         u['has_role'] = u['username'] in roles
     data = json.dumps(list(users), default=json_util.default)
