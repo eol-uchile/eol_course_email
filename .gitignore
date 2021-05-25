@@ -70,4 +70,4 @@ setup.cfg
 *.bak
 
 # MacOSX
-.DS_Store
+.*DS_Store

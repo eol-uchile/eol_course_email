@@ -12,6 +12,25 @@ LMS/CMS Django Admin:
     - **"EOL_COURSE_EMAIL_TAB_ENABLED":true**
 
 
+### File Upload Configuration
+
+Add this configuration in `production.py`
+
+```
+## Setup COURSE_EMAIL for S3
+COURSE_EMAIL_STORAGE_CLASS = {
+  'class': 'storages.backends.s3boto3.S3Boto3Storage',
+  'options': {
+    'location': 'course_email/',
+    'bucket_name': 'bucketname'
+  }
+}
+PDF_STORAGE_CLASS = ENV_TOKENS.get('COURSE_EMAIL_STORAGE_CLASS', COURSE_EMAIL_STORAGE_CLASS)
+```
+
+Fileupload max size: 10mb (customizable)
+
+
 ## Development Settings
 
 Set React app url:

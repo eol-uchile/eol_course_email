@@ -20,10 +20,13 @@ import json
 from django.db.models.functions import Lower
 from .models import EolCourseEmail
 from .email_tasks import send_email
+from .upload import upload_file
 from student.models import CourseAccessRole
+from django.core.serializers import serialize
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class EolCourseEmailFragmentView(EdxFragmentView):
     def render_to_fragment(self, request, course_id, **kwargs):
@@ -157,7 +160,7 @@ def send_new_email(request, course_id):
     if request.method != "POST":
         logger.warning("Wrong Method/data")
         return HttpResponse(status=400)
-    data = json.loads(request.body.decode())
+    data = request.POST
     if 'subjectInput' not in data or 'messageInput' not in data or 'studentsInput' not in data or 'staffInput' not in data:
         logger.warning("POST without all data")
         return HttpResponse(status=400)
@@ -168,7 +171,8 @@ def send_new_email(request, course_id):
     user = request.user
     subject = data['subjectInput']
     message = data['messageInput']
-    receiver_usernames = data['studentsInput'] + data['staffInput']
+    receiver_usernames = data['studentsInput'].split(",") + data['staffInput'].split(",")
+
 
     # get users
     receiver_users = User.objects.filter(
@@ -186,6 +190,12 @@ def send_new_email(request, course_id):
     )
     email.save()
     email.receiver_users.add(*receiver_users)
+
+    if request.FILES:
+        upload = upload_file(course_id, request.FILES['fileInput'])
+        if upload['error']:
+            return HttpResponse('file_size', status=409)
+        email.files.add(upload['file'])
 
     # Generate and send email
     redirect_url = reverse(
@@ -221,5 +231,14 @@ def generate_email(email, redirect_url):
         'eol_course_email/email.txt', context)
     plain_message = strip_tags(html_message)
     email_subject = "{} - {}".format(email.subject, course.display_name_with_default)
+    files = json.dumps(list(email.files.all().values('file_name', 'file_path', 'content_type')), default=json_util.default)
     for u in email.receiver_users.all():
-        send_email.delay(from_email, email.sender_user.email, u.email, email_subject, html_message, plain_message)
+        send_email.delay(
+            from_email, 
+            email.sender_user.email, 
+            u.email, 
+            email_subject, 
+            html_message, 
+            plain_message, 
+            files
+        )
