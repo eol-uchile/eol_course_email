@@ -18,7 +18,7 @@ from student.roles import CourseStaffRole
 from six.moves import range
 
 from . import views, email_tasks, upload
-from .models import EolCourseEmail
+from .models import EolCourseEmail, FilesCourseEmail
 
 
 USER_COUNT = 11
@@ -26,6 +26,12 @@ USER_COUNT = 11
 DEFAULT_TEST_DATA_LENGTH = 5
 def generate_default_test_data(course_id, sender_user, receiver_user_list):
     for i in range(DEFAULT_TEST_DATA_LENGTH):
+        file = FilesCourseEmail(
+            file_name='name',
+            file_path='path',
+            content_type='content_type'
+        )
+        file.save()
         email = EolCourseEmail(
             course_id=course_id,
             sender_user=sender_user,
@@ -33,6 +39,7 @@ def generate_default_test_data(course_id, sender_user, receiver_user_list):
             message="Message {}".format(i)
         )
         email.save()
+        email.files.add(file)
         email.receiver_users.add(*receiver_user_list)
 
 class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):

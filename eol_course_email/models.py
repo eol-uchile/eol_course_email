@@ -36,3 +36,17 @@ class EolCourseEmail(models.Model):
             Return list of users profile names
         """
         return [u.profile.name for u in self.receiver_users.all()]
+
+    
+    @property
+    def files_list(self):
+        """
+            Return list of files
+        """
+        return [
+            {
+                'name': f.file_name,
+                'path': f.file_path
+            }
+            for f in self.files.all()
+        ]

@@ -81,13 +81,18 @@ def get_received_emails(request, course_id):
         course_id=course_id,
         receiver_users__in=[user],
         deleted_at__isnull=True
-    ).values(
-        'subject',
-        'message',
-        'sender_user__profile__name',
-        'created_at'
     ).order_by('-created_at')
-    data = json.dumps(list(emails), default=json_util.default)
+    received_emails = [
+        {
+            'subject' : e.subject,
+            'message' : e.message,
+            'files_list' : e.files_list,
+            'sender_user' : e.sender_user.profile.name,
+            'created_at' : e.created_at,
+        }
+        for e in emails
+    ]
+    data = json.dumps(list(received_emails), default=json_util.default)
     return HttpResponse(data)
 
 def get_sended_emails(request, course_id):
@@ -105,6 +110,7 @@ def get_sended_emails(request, course_id):
     sended_emails = [
         {
             'receiver_users_list' : e.receiver_users_list,
+            'files_list' : e.files_list,
             'sender_user' : e.sender_user.profile.name,
             'subject' : e.subject,
             'message' : e.message,
