@@ -168,6 +168,12 @@ def send_new_email(request, course_id):
     # Ratelimit: too many API calls
     if getattr(request, 'limited', False):
         return HttpResponse('ratelimit', status=403)
+
+    if request.FILES:
+        upload = upload_file(course_id, request.FILES['fileInput'])
+        # File exceded max size
+        if upload['error']:
+            return HttpResponse('file_size', status=409)
     user = request.user
     subject = data['subjectInput']
     message = data['messageInput']
@@ -192,9 +198,6 @@ def send_new_email(request, course_id):
     email.receiver_users.add(*receiver_users)
 
     if request.FILES:
-        upload = upload_file(course_id, request.FILES['fileInput'])
-        if upload['error']:
-            return HttpResponse('file_size', status=409)
         email.files.add(upload['file'])
 
     # Generate and send email
