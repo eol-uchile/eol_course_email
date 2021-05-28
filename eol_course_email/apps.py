@@ -11,7 +11,7 @@ class EolCourseEmailConfig(AppConfig):
     plugin_app = {
         PluginURLs.CONFIG: {
             ProjectType.LMS: {
-                PluginURLs.NAMESPACE: '',
+                PluginURLs.NAMESPACE: 'eol/course_email',
                 PluginURLs.REGEX: r'^',
                 PluginURLs.RELATIVE_PATH: 'urls',
             }

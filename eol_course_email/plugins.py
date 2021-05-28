@@ -12,7 +12,7 @@ class EolCourseEmailTab(TabFragmentViewMixin, EnrolledTab):
     type = 'eol_course_email'
     title = ugettext_noop('Contacto')
     priority = None
-    view_name = 'course_email_view'
+    view_name = 'eol/course_email:course_email_view'
     fragment_view_name = 'eol_course_email.views.EolCourseEmailFragmentView'
     is_hideable = True
     is_default = True

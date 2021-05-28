@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import urllib.parse
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from django.conf import settings
 from lms.djangoapps.courseware.courses import get_course_by_id
@@ -20,10 +20,13 @@ import json
 from django.db.models.functions import Lower
 from .models import EolCourseEmail
 from .email_tasks import send_email
+from .upload import upload_file, get_storage
 from student.models import CourseAccessRole
+from django.core.serializers import serialize
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class EolCourseEmailFragmentView(EdxFragmentView):
     def render_to_fragment(self, request, course_id, **kwargs):
@@ -78,13 +81,18 @@ def get_received_emails(request, course_id):
         course_id=course_id,
         receiver_users__in=[user],
         deleted_at__isnull=True
-    ).values(
-        'subject',
-        'message',
-        'sender_user__profile__name',
-        'created_at'
     ).order_by('-created_at')
-    data = json.dumps(list(emails), default=json_util.default)
+    received_emails = [
+        {
+            'subject' : e.subject,
+            'message' : e.message,
+            'files_list' : e.files_list,
+            'sender_user' : e.sender_user.profile.name,
+            'created_at' : e.created_at,
+        }
+        for e in emails
+    ]
+    data = json.dumps(list(received_emails), default=json_util.default)
     return HttpResponse(data)
 
 def get_sended_emails(request, course_id):
@@ -102,6 +110,7 @@ def get_sended_emails(request, course_id):
     sended_emails = [
         {
             'receiver_users_list' : e.receiver_users_list,
+            'files_list' : e.files_list,
             'sender_user' : e.sender_user.profile.name,
             'subject' : e.subject,
             'message' : e.message,
@@ -157,7 +166,7 @@ def send_new_email(request, course_id):
     if request.method != "POST":
         logger.warning("Wrong Method/data")
         return HttpResponse(status=400)
-    data = json.loads(request.body.decode())
+    data = request.POST
     if 'subjectInput' not in data or 'messageInput' not in data or 'studentsInput' not in data or 'staffInput' not in data:
         logger.warning("POST without all data")
         return HttpResponse(status=400)
@@ -165,10 +174,17 @@ def send_new_email(request, course_id):
     # Ratelimit: too many API calls
     if getattr(request, 'limited', False):
         return HttpResponse('ratelimit', status=403)
+
+    if request.FILES:
+        upload = upload_file(course_id, request.FILES['fileInput'])
+        # File exceded max size
+        if upload['error']:
+            return HttpResponse('file_size', status=409)
     user = request.user
     subject = data['subjectInput']
     message = data['messageInput']
-    receiver_usernames = data['studentsInput'] + data['staffInput']
+    receiver_usernames = data['studentsInput'].split(",") + data['staffInput'].split(",")
+
 
     # get users
     receiver_users = User.objects.filter(
@@ -187,9 +203,12 @@ def send_new_email(request, course_id):
     email.save()
     email.receiver_users.add(*receiver_users)
 
+    if request.FILES:
+        email.files.add(upload['file'])
+
     # Generate and send email
     redirect_url = reverse(
-        'course_email_view',
+        'eol/course_email:course_email_view',
             kwargs={
                 'course_id': email.course_id
             }
@@ -221,5 +240,29 @@ def generate_email(email, redirect_url):
         'eol_course_email/email.txt', context)
     plain_message = strip_tags(html_message)
     email_subject = "{} - {}".format(email.subject, course.display_name_with_default)
+    files = json.dumps(list(email.files.all().values('file_name', 'file_path', 'content_type')), default=json_util.default)
     for u in email.receiver_users.all():
-        send_email.delay(from_email, email.sender_user.email, u.email, email_subject, html_message, plain_message)
+        send_email.delay(
+            from_email, 
+            email.sender_user.email, 
+            u.email, 
+            email_subject, 
+            html_message, 
+            plain_message, 
+            files
+        )
+
+def get_file_url(request, course_id, file, content_type):
+    """
+        Get file url: course_id/file_hash.ext
+    """
+    if(not _has_page_access(request, course_id)):
+        raise Http404()
+    try:
+        file_path = "{}/{}".format(course_id, file)
+        return HttpResponse(
+        get_storage().open(file_path).read(),
+        content_type=urllib.parse.unquote(content_type),
+        )
+    except Exception: 
+        raise Http404()
