@@ -51,7 +51,7 @@ urlpatterns = (
         name='course_email_send_new_email',
     ),
     url(
-        r'^get_file/(?P<content_type>.*)/{}/(?P<file>.*)'.format(
+        r'^courses/{}/get_file/(?P<content_type>.*)/(?P<file>.*)'.format(
             settings.COURSE_ID_PATTERN,
         ),
         get_file_url,
