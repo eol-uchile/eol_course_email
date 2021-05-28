@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import urllib.parse
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from django.conf import settings
 from lms.djangoapps.courseware.courses import get_course_by_id
@@ -20,7 +20,7 @@ import json
 from django.db.models.functions import Lower
 from .models import EolCourseEmail
 from .email_tasks import send_email
-from .upload import upload_file
+from .upload import upload_file, get_storage
 from student.models import CourseAccessRole
 from django.core.serializers import serialize
 
@@ -208,7 +208,7 @@ def send_new_email(request, course_id):
 
     # Generate and send email
     redirect_url = reverse(
-        'course_email_view',
+        'eol/course_email:course_email_view',
             kwargs={
                 'course_id': email.course_id
             }
@@ -251,3 +251,18 @@ def generate_email(email, redirect_url):
             plain_message, 
             files
         )
+
+def get_file_url(request, course_id, file, content_type):
+    """
+        Get file url: course_id/file_hash.ext
+    """
+    if(not _has_page_access(request, course_id)):
+        raise Http404()
+    try:
+        file_path = "{}/{}".format(course_id, file)
+        return HttpResponse(
+        get_storage().open(file_path).read(),
+        content_type=urllib.parse.unquote(content_type),
+        )
+    except Exception: 
+        raise Http404()

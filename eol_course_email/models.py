@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-
+import urllib.parse
 
 from django.db import models
 
 from django.contrib.auth.models import User
 from opaque_keys.edx.django.models import CourseKeyField
+from django.urls import reverse
 
 class FilesCourseEmail(models.Model):
     """
@@ -46,7 +47,14 @@ class EolCourseEmail(models.Model):
         return [
             {
                 'name': f.file_name,
-                'path': f.file_path
+                'url': reverse(
+                    'eol/course_email:get_file_url', 
+                    kwargs={
+                        'content_type': urllib.parse.quote(f.content_type.encode('utf-8'), safe=''),
+                        'course_id': f.file_path.split("/")[0], 
+                        'file': f.file_path.split("/")[1]
+                    }
+                )
             }
             for f in self.files.all()
         ]

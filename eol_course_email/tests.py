@@ -28,7 +28,7 @@ def generate_default_test_data(course_id, sender_user, receiver_user_list):
     for i in range(DEFAULT_TEST_DATA_LENGTH):
         file = FilesCourseEmail(
             file_name='name',
-            file_path='path',
+            file_path='course-v1:eol+mss-01+2021/path',
             content_type='content_type'
         )
         file.save()
@@ -81,7 +81,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
             Test correct render page with an IFrame
         """
         has_page_access.side_effect = [True]
-        url = reverse('course_email_view',
+        url = reverse('eol/course_email:course_email_view',
                       kwargs={'course_id': self.course.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -96,7 +96,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         # Empty list
         response = self.client.get(
             reverse(
-                'course_email_user_email',
+                'eol/course_email:course_email_user_email',
                     kwargs={'course_id': self.course.id}
             )
         )
@@ -112,7 +112,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         # Empty list
         response = self.client.get(
             reverse(
-                'course_email_received_emails',
+                'eol/course_email:course_email_received_emails',
                     kwargs={'course_id': self.course.id}
             )
         )
@@ -123,7 +123,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         generate_default_test_data(self.course.id, self.staff_user, [self.student, self.staff_user])
         response = self.client.get(
             reverse(
-                'course_email_received_emails',
+                'eol/course_email:course_email_received_emails',
                     kwargs={'course_id': self.course.id}
             )
         )
@@ -139,7 +139,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         # Empty list
         response = self.client.get(
             reverse(
-                'course_email_sended_emails',
+                'eol/course_email:course_email_sended_emails',
                     kwargs={'course_id': self.course.id}
             )
         )
@@ -150,7 +150,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         generate_default_test_data(self.course.id, self.student, [self.staff_user])
         response = self.client.get(
             reverse(
-                'course_email_sended_emails',
+                'eol/course_email:course_email_sended_emails',
                     kwargs={'course_id': self.course.id}
             )
         )
@@ -165,7 +165,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         has_page_access.side_effect = [True]
         response = self.client.get(
             reverse(
-                'course_email_users',
+                'eol/course_email:course_email_users',
                     kwargs={'course_id': self.course.id}
             )
         )
@@ -187,14 +187,14 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         has_page_access.side_effect = [True, True, True, True]
         response = self.client.get(
             reverse(
-                'course_email_send_new_email',
+                'eol/course_email:course_email_send_new_email',
                     kwargs={'course_id': self.course.id}
             )
         )
         self.assertEqual(response.status_code, 400) # not a GET request
         response = self.client.post(
             reverse(
-                'course_email_send_new_email',
+                'eol/course_email:course_email_send_new_email',
                     kwargs={'course_id': self.course.id}
             )
         )
@@ -206,7 +206,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         }
         response = self.client.post(
             reverse(
-                'course_email_send_new_email',
+                'eol/course_email:course_email_send_new_email',
                     kwargs={'course_id': self.course.id}
             ), post_data
         )
@@ -222,7 +222,7 @@ class TestEolCourseEmailView(UrlResetMixin, ModuleStoreTestCase):
         with override_settings(RATELIMIT_ENABLE=False):
             response = self.client.post(
                 reverse(
-                    'course_email_send_new_email',
+                    'eol/course_email:course_email_send_new_email',
                         kwargs={'course_id': self.course.id}
                 ), post_data
             )

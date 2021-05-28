@@ -3,7 +3,7 @@
 from django.conf.urls import url
 from django.conf import settings
 
-from .views import EolCourseEmailFragmentView, get_received_emails, get_sended_emails, get_all_users_enrolled, send_new_email, get_user_email
+from .views import EolCourseEmailFragmentView, get_received_emails, get_sended_emails, get_all_users_enrolled, send_new_email, get_user_email, get_file_url
 from django.contrib.auth.decorators import login_required
 
 
@@ -49,5 +49,12 @@ urlpatterns = (
         ),
         login_required(send_new_email),
         name='course_email_send_new_email',
+    ),
+    url(
+        r'^get_file/(?P<content_type>.*)/{}/(?P<file>.*)'.format(
+            settings.COURSE_ID_PATTERN,
+        ),
+        get_file_url,
+        name='get_file_url',
     ),
 )
