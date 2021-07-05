@@ -2,7 +2,7 @@ from django.conf import settings
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from django.utils.translation import ugettext_noop
 
-from courseware.tabs import EnrolledTab
+from lms.djangoapps.courseware.tabs import EnrolledTab
 from xmodule.tabs import TabFragmentViewMixin
 
 from django.contrib.auth.models import User
