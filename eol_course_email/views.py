@@ -154,7 +154,7 @@ def get_access_roles(course_id):
     )
     return list(roles)
 
-# @ratelimit(key=settings.EOL_COURSE_EMAIL_POST_EMAIL_KEY, rate=settings.EOL_COURSE_EMAIL_POST_EMAIL_RATE)
+@ratelimit(key=settings.EOL_COURSE_EMAIL_POST_EMAIL_KEY, rate=settings.EOL_COURSE_EMAIL_POST_EMAIL_RATE)
 def send_new_email(request, course_id):
     """
         POST
@@ -172,8 +172,8 @@ def send_new_email(request, course_id):
         return HttpResponse(status=400)
 
     # Ratelimit: too many API calls
-    # if getattr(request, 'limited', False):
-    #     return HttpResponse('ratelimit', status=403)
+    if getattr(request, 'limited', False):
+        return HttpResponse('ratelimit', status=403)
 
     if request.FILES:
         upload = upload_file(course_id, request.FILES['fileInput'])
