@@ -154,7 +154,7 @@ def get_access_roles(course_id):
     )
     return list(roles)
 
-@ratelimit(key='user_or_ip', rate=settings.EOL_COURSE_EMAIL_POST_EMAIL_RATE)
+@ratelimit(key=settings.EOL_COURSE_EMAIL_POST_EMAIL_KEY, rate=settings.EOL_COURSE_EMAIL_POST_EMAIL_RATE)
 def send_new_email(request, course_id):
     """
         POST
