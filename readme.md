@@ -12,6 +12,27 @@ LMS/CMS Django Admin:
     - **"EOL_COURSE_EMAIL_TAB_ENABLED":true**
 
 
+## Translation
+
+**Install**
+
+    docker run -it --rm -w /code -v $(pwd):/code python:3.8 bash
+    pip install -r requirements.txt
+    make create_translations_catalogs
+    add your translation in .po files
+
+**Compile**
+
+    docker run -it --rm -w /code -v $(pwd):/code python:3.8 bash
+    pip install -r requirements.txt
+    make compile_translations
+
+**Update**
+
+    docker run -it --rm -w /code -v $(pwd):/code python:3.8 bash
+    pip install -r requirements.txt
+    make update_translations
+
 ### File Upload Configuration
 
 Add this configuration in `production.py`
