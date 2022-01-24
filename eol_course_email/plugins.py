@@ -1,6 +1,6 @@
 from django.conf import settings
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 
 from courseware.tabs import EnrolledTab
 from xmodule.tabs import TabFragmentViewMixin
@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 
 class EolCourseEmailTab(TabFragmentViewMixin, EnrolledTab):
     type = 'eol_course_email'
-    title = ugettext_noop('Contacto')
+    title = _('Contacto')
     priority = None
     view_name = 'eol/course_email:course_email_view'
     fragment_view_name = 'eol_course_email.views.EolCourseEmailFragmentView'
