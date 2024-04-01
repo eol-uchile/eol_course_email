@@ -2,7 +2,7 @@
 import urllib.parse
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from django.conf import settings
-from lms.djangoapps.courseware.courses import get_course_by_id
+from lms.djangoapps.courseware.courses import get_course_by_id, get_course_with_access
 from lms.djangoapps.courseware.tabs import get_course_tab_list
 from django.utils.html import strip_tags
 from django.urls import reverse
@@ -10,7 +10,6 @@ from ratelimit.decorators import ratelimit
 
 from django.template.loader import render_to_string
 from web_fragments.fragment import Fragment
-from courseware.courses import get_course_with_access
 from openedx.core.djangoapps.plugin_api.views import EdxFragmentView
 from opaque_keys.edx.keys import CourseKey
 from django.contrib.auth.models import User
@@ -21,7 +20,7 @@ from django.db.models.functions import Lower
 from .models import EolCourseEmail
 from .email_tasks import send_email
 from .upload import upload_file, get_storage
-from student.models import CourseAccessRole
+from common.djangoapps.student.models import CourseAccessRole
 from django.core.serializers import serialize
 
 import logging
