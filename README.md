@@ -1,6 +1,8 @@
 # EOL Course Email
 
-![https://github.com/eol-uchile/eol_course_email/actions](https://github.com/eol-uchile/eol_course_email/workflows/Python%20application/badge.svg)
+![Coverage Status](/coverage-badge.svg)
+
+![https://github.com/eol-uchile/eol_course_email/actions](https://github.com/eol-uchile/eol_course_email/workflows/Python%20application/badge.svg) 
 
 Email between course participants
 
